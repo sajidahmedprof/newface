@@ -1,24 +1,11 @@
 import os
-import streamlit as st
 import cv2
 import numpy as np
+import streamlit as st
 from PIL import Image
 
-@st.cache_resource
-def load_face_detection_model():
-    # Retrieve the path to the XML bundled with opencv-python
-    cascade_path = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml')
-    
-    face_cascade = cv2.CascadeClassifier(cascade_path)
-    
-    # Verify the classifier loaded properly
-    if face_cascade.empty():
-        st.error(f"Failed to load cascade classifier from {cascade_path}")
-        st.stop()
-        
-    return face_cascade
 # -----------------------------------------------------------------------------
-# Streamlit Page Configuration
+# Streamlit Page Configuration (MUST BE FIRST STREAMLIT COMMAND)
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="NewFace AI App",
@@ -28,19 +15,24 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Heavy Model / Resource Loader (Cached to prevent startup timeouts)
+# Heavy Model / Resource Loader
 # -----------------------------------------------------------------------------
 @st.cache_resource(show_spinner="Loading face detection models...")
 def load_face_detection_model():
     """
-    Loads OpenCV's Haar Cascade classifier or your custom face detection model.
-    Caching ensures this code runs only once when the server boots.
+    Loads OpenCV's Haar Cascade classifier safely using os.path.join.
     """
-    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    cascade_path = os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
+    
+    if not os.path.exists(cascade_path):
+        st.error(f"Cascade XML file not found at: {cascade_path}")
+        return None
+
     face_cascade = cv2.CascadeClassifier(cascade_path)
     if face_cascade.empty():
         st.error("Failed to load face detection cascade XML.")
         return None
+
     return face_cascade
 
 # Load model at runtime safely
@@ -126,7 +118,7 @@ def main():
 
             with col1:
                 st.subheader("Original Image")
-                st.image(image, use_column_width=True)
+                st.image(image, use_container_width=True)
 
             with col2:
                 st.subheader("Detection Result")
@@ -134,7 +126,7 @@ def main():
                     result_img, detected_faces = detect_faces(
                         image, scale_factor, min_neighbors
                     )
-                    st.image(result_img, use_column_width=True)
+                    st.image(result_img, use_container_width=True)
 
             # Display Stats
             st.divider()
