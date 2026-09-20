@@ -1,8 +1,22 @@
+import os
 import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
 
+@st.cache_resource
+def load_face_detection_model():
+    # Retrieve the path to the XML bundled with opencv-python
+    cascade_path = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml')
+    
+    face_cascade = cv2.CascadeClassifier(cascade_path)
+    
+    # Verify the classifier loaded properly
+    if face_cascade.empty():
+        st.error(f"Failed to load cascade classifier from {cascade_path}")
+        st.stop()
+        
+    return face_cascade
 # -----------------------------------------------------------------------------
 # Streamlit Page Configuration
 # -----------------------------------------------------------------------------
